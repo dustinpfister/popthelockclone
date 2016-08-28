@@ -1,0 +1,482 @@
+<html>
+<head>
+<title></title>
+</head>
+<body>
+
+<div id="container"></div>
+<script>
+
+
+(function(){
+
+    var currentState = 'gameStart',
+	containerId = 'container',
+	canvas,context,
+    
+	angleDistance = function(angle1,angle2){
+	
+		var distance1 = Math.abs(angle1-angle2),
+		distance2 = Math.PI*2 - distance1,
+	    //sum = distance1 + distance2, // sum always = PI*2
+		absDiff = Math.abs(distance1 - distance2); // abs difference will approach PI*2 as they get closer to each other. 
+	
+	    return absDiff;
+	
+	},
+	
+	lock = {
+	
+	    // pointer
+	    pointer : 0,          // the radian position of the pointer
+		clockwise:true,
+		pointerDelta : 0.05,   // the delta rate at which the pointer moves
+		tripUp: false,
+		
+		// tumbler
+		tumbler : 3.14,        // the radian position of the tumbler
+	    tumblerRange : .8,      // the radian range that the pointer can get within to trigger win loose
+		
+		// game state
+		winOrLoose : false,
+		win:false,
+		userTap: false,		
+		maxCount:20,
+		count:1,
+		
+		// rendering
+		effectRadian : 0,
+		effectMaxRadian : 1,
+		effectFrame:0,
+		effectMaxFrame: 40,
+		
+		setCount : function(count){
+		
+		    if(count){this.maxCount = count}
+		
+		    this.count = this.maxCount;
+		    this.winOrLoose = false;
+			this.win = false;
+			this.userTap = false;
+		
+		    //this.pointer = 4;
+			//this.tumbler = 0;
+		
+		    //this.pointer = Math.random() * Math.PI * 2;
+			this.pointer = Math.PI * 1.5;
+			
+			// random pointer direction
+			//this.pointerDelta = 0.1 * (1 - 2*Math.floor( Math.random() * 2 ));
+			this.clockwise = Boolean(Math.floor( Math.random() * 2 ));
+			
+			// pointer dirrection based on clockwsie boolean
+			this.pointerDelta = 0.1 * (1 - 2 * Number(!this.clockwise) );
+			
+			this.tumbler = this.pointer + Math.PI / 3 + Math.random()* Math.PI * 1.33;
+			
+			if(this.tumbler >= Math.PI*2){
+			
+			    this.tumbler -= Math.PI*2;
+			
+			}
+		
+		},
+		
+		nextCount : function(){
+		
+		    
+			if(this.count > 0){
+			
+			    this.winOrLoose = false;
+			    this.win = false;
+			    this.userTap = false;
+		
+		        //this.pointer = 4;
+			    //this.tumbler = 0;
+		
+		        //this.pointer = Math.random() * Math.PI * 2;
+			    //this.pointerDelta = 0.1 * (1 - 2*Math.floor( Math.random() * 2 ));
+			    this.clockwise = !this.clockwise;
+				this.pointerDelta = 0.1 * (1 - 2 * Number(!this.clockwise) );
+			
+			    if(this.tripUp){
+			
+			        
+			
+			        if(this.pointerDelta > 0){
+					
+					    console.log('one');
+					
+					    this.tumbler = this.pointer + Math.PI / 3;
+					
+					}else{
+					
+					    console.log('two');
+					
+					    this.tumbler = this.pointer - Math.PI / 3;
+					
+					}
+			
+			    }else{
+				
+				    //this.tumbler = this.pointer + Math.PI/3;
+			        this.tumbler = this.pointer + Math.PI / 3 + Math.random()* Math.PI * 1.33;
+					
+			    }
+			
+		    	if(this.tumbler >= Math.PI*2){
+			
+			        this.tumbler -= Math.PI*2;
+			
+			    }
+			
+			}
+		
+		    
+		
+		}
+	},
+	
+	
+	start = function(){
+	
+	    canvas = document.createElement('canvas');
+		context = canvas.getContext('2d');
+			
+		canvas.width = 640;
+		canvas.height = 480;
+			
+		document.getElementById(containerId).appendChild(canvas);
+		
+		context.fillStyle='#000000';
+		context.fillRect(0,0,canvas.width,canvas.height);
+		
+		
+		canvas.addEventListener('touchstart', function(e){
+	       e.preventDefault();
+	        lock.userTap = true;
+	
+	    });
+		canvas.addEventListener('mousedown', function(e){
+	        e.preventDefault();
+	        lock.userTap = true;
+	
+	    });
+		
+		currentState = 'gameStart';
+		   
+		/*   
+		var angle1 = 6,
+		angle2 = 6,
+		distance1 = Math.abs(angle1-angle2),
+		distance2 = Math.PI*2 - Math.abs(angle1-angle2),
+	    sum = distance1 + distance2,
+		absDiff = Math.abs(distance1 - distance2);
+	
+	    console.log('distnace1: ' + distance1);
+		console.log('distnace2: ' + distance2);
+		console.log('sum: ' + sum);
+		console.log('absDiff: ' + absDiff);
+	*/
+	
+	    loop();
+	},
+	
+	
+	state = {
+	
+	    gameStart : function(){
+		
+		    lock.setCount();
+		
+		    currentState = 'game';
+		},
+		
+		nextCount : function(){
+		
+		    if(lock.count > 0){
+			
+			    lock.nextCount();
+			    currentState = 'game';
+			
+			}else{
+			
+			    lock.userTap = false;
+			    currentState = 'win'
+			}
+		
+		},
+		
+		runOver : function(){
+		
+		    if(lock.userTap){
+			    
+			    currentState = 'gameStart';
+			    lock.effectFrame = 0;
+			}
+		
+		    console.log(lock.effectRadian);
+		
+		    if(lock.effectFrame <= lock.effectMaxFrame){
+		
+                lock.effectRadian = lock.effectMaxRadian / lock.effectMaxFrame * lock.effectFrame;        
+		        
+		
+			    lock.effectFrame++;
+				
+			
+			}
+		
+		},
+		
+		win : function(){
+		
+		    if(lock.userTap){
+			
+			    console.log('tap');
+				
+				lock.maxCount++;
+				currentState = 'gameStart';
+			
+			}
+		
+		    lock.userTap = false;
+		},
+		
+		game: function(){
+		
+		    var tumbLow = lock.tumbler - lock.tumblerRange,
+			    tumbHigh = lock.tumbler + lock.tumblerRange;
+		    
+			lock.pointer += lock.pointerDelta;
+			
+			if(tumbLow < 0){
+			
+			    tumbLow += Math.PI*2;
+			}
+			
+			if(tumbHigh >= Math.PI*2){
+			
+			    tumbHigh -= Math.PI*2;
+			}
+			
+			// if the pointer is in range
+			// BOOKMARK! winOrLoose boolean does not set true when lock.tumbler is near 0/Math.PI*2 and lock.delta is negative
+			//if(lock.pointer >= lock.tumbler - lock.tumblerRange / 2 && lock.pointer <= lock.tumbler + lock.tumblerRange / 2){
+			//if(lock.pointer >= tumbLow / 2 && lock.pointer <= tumbHigh / 2){
+			
+			var angle = angleDistance(lock.pointer, lock.tumbler);
+			
+			if( angle >= Math.PI*2 - lock.tumblerRange/2){
+			
+			
+			    //lock.inRange = true;
+			    lock.winOrLoose = true;	
+				
+				if(lock.userTap){
+				
+				    lock.pointerDelta = 0;
+					lock.win = true;
+				
+				}
+				
+			}else{
+			
+			    //lock.inRange = false;
+			
+			    if(lock.userTap){
+				
+				    lock.pointerDelta = 0;
+				    lock.win = false;
+					
+				}
+			
+			    if(lock.winOrLoose){
+				
+				    lock.pointerDelta = 0;
+				    lock.win = false;
+					
+				}
+			
+			}
+			
+			
+			
+			
+			if(lock.pointer >= Math.PI*2){
+			
+			    lock.pointer -= Math.PI*2;
+			
+			}
+			
+			if(lock.pointer < 0){
+			
+			    lock.pointer += Math.PI*2;
+			
+			}
+			
+			
+			if(lock.pointerDelta === 0){
+			
+			    lock.userTap = false;
+				
+				if(lock.win){
+			    	lock.count--;
+			
+			        if(lock.count < 0){lock.count=0;}
+		    	    currentState = 'nextCount';
+				
+				}else{
+			    
+    				currentState = 'runOver';
+			    
+				}
+			}
+		
+		}
+		
+    },
+
+    draw = (function(){
+	
+	
+	    var drawLock = function(ctx){
+	        
+			// draw lock path
+			ctx.strokeStyle = '#000000';
+			ctx.lineWidth = 21;
+			ctx.beginPath();
+			ctx.arc(320,240,100,0,Math.PI*2);
+			ctx.stroke();
+			
+			// draw pointer	
+		    x = Math.cos(lock.pointer) * 100 + 320;
+			y = Math.sin(lock.pointer) * 100 + 240;
+			
+			ctx.fillStyle = '#a0a000';
+			ctx.strokeStyle = '#ffffff';
+			ctx.lineWidth = 4;
+			ctx.beginPath();
+			ctx.arc(x,y,10,0,Math.PI*2);
+			ctx.stroke();
+			ctx.fill();
+		
+		    // draw tumbler	
+		    x = Math.cos(lock.tumbler) * (100-15) + 320;
+			y = Math.sin(lock.tumbler) * (100-15) + 240;
+			
+			ctx.fillStyle = '#a0a000';
+			ctx.strokeStyle = '#ffff00';
+			ctx.lineWidth = 11;
+			ctx.beginPath();
+			
+			ctx.moveTo(x,y);
+			ctx.lineTo(
+			    
+				Math.cos(lock.tumbler) * (100+15) + 320,
+			    Math.sin(lock.tumbler) * (100+15) + 240
+			);
+			ctx.stroke();
+			ctx.fill();
+			
+			
+			
+		    // info	
+			ctx.fillStyle='#000000';
+			ctx.textBaseline = 'top';
+			ctx.textAlign='left';
+			ctx.font='15px courier';
+			ctx.fillText('pointer radian: '+lock.pointer.toFixed(2), 10,10);
+			ctx.fillText('winOrLoose: ' + lock.winOrLoose, 10,30);
+			ctx.fillText('win: ' + lock.win, 10,50);
+			ctx.fillText('user tap: ' + lock.userTap, 10,70);
+			ctx.fillText('current state: ' + currentState, 10,90);
+		
+			
+	    },
+		
+		drawCountDisplay = function(ctx,x,y){
+		
+		    // draw count display
+			ctx.fillStyle = '#ffffff';
+			ctx.textBasleline = 'top';
+			ctx.textAlign = 'center';
+			ctx.font = '50px arial';
+			ctx.fillText(lock.count, x,y-25);
+		
+		
+		};
+	
+	    return {
+		
+		gameStart : function(ctx){
+		
+		    ctx.fillStyle='#008080';
+			ctx.fillRect(0,0,canvas.width,canvas.height);
+			
+			drawLock(ctx);
+		    drawCountDisplay(ctx, 320,240);
+		},
+		nextCount : function(ctx){
+		
+		    ctx.fillStyle='#008080';
+			ctx.fillRect(0,0,canvas.width,canvas.height);
+			
+			drawLock(ctx);
+			drawCountDisplay(ctx, 320,240);
+		},
+		
+		game: function(ctx){
+		
+		    ctx.fillStyle='#008080';
+			ctx.fillRect(0,0,canvas.width,canvas.height);
+			
+			drawLock(ctx);
+		    drawCountDisplay(ctx, 320,240);
+		},
+		win : function(ctx){
+		
+		    ctx.fillStyle='#00ff00';
+			ctx.fillRect(0,0,canvas.width,canvas.height);
+			
+			drawLock(ctx);
+		    drawCountDisplay(ctx, 320,240);
+		},
+		runOver : function(ctx){
+		
+			
+			ctx.fillStyle = lock.win ? '#00af00' : '#af0000';
+			ctx.fillRect(0,0,canvas.width,canvas.height);
+			drawLock(ctx);
+		
+		    ctx.save();
+			ctx.translate(320,240);
+			ctx.rotate(lock.effectRadian);
+		    drawCountDisplay(ctx,0,0);
+		    ctx.restore();
+		
+		}
+		
+		};
+		
+	
+    }()),
+	
+	loop = function(){
+	
+	    setTimeout(loop, 33);
+		
+		state[currentState]();
+		draw[currentState](context);
+	
+	};
+	
+	start();
+
+}());
+
+
+</script>
+
+</body>
+</html>

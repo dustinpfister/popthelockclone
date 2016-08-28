@@ -1,0 +1,66 @@
+<html>
+<head>
+<title></title>
+</head>
+<body>
+
+<div id="container"></div>
+<script>
+
+var pi2 = Math.PI * 2,
+    divs = 125,
+	click = 100,
+	radian = pi2 / divs * click;
+
+	
+	//console.log(radian);
+	
+	
+var radian = 0, c = 0;
+    
+	
+while(c < click){
+
+    radian += 0.05;//pi2 / divs;
+
+    c++;
+}
+
+//console.log(radian);
+//console.log( 0.03 * (180/Math.PI));
+
+var angleDistance = function(angle1,angle2){
+	
+		var distance1 = Math.abs(angle1-angle2),
+		distance2 = Math.PI*2 - distance1,
+	    //sum = distance1 + distance2, // sum always = PI*2
+		absDiff = Math.abs(distance1 - distance2); // abs difference will approach PI*2 as they get closer to each other. 
+	
+	    return absDiff;
+	
+	};
+
+var divs = 50,
+    tumbler = 30,
+	pin = 26;
+	
+var halfDistnace = function(total, pos1, pos2){
+
+	var d1 = Math.abs(pos1 - pos2),
+	d2 = total - d1,
+	distance = d1 < d2 ? d1 : d2;
+	
+	return distance;
+	
+};
+
+// console.log(halfDistnace(divs,pin,tumbler));
+
+//console.log(halfDistnace(Math.PI*2,0,6.26));
+	
+console.log(  Math.round( Math.random() * (10-5) )+5 );
+	
+	
+</script>
+</body>
+</html>
